@@ -5,6 +5,7 @@ import {
   getUserById,
   updateUser,
 } from "./users.service";
+import { handleRouteError } from "../../utils/responses";
 
 const userUpdateBody = t.Object({
   id: t.String(),
@@ -27,13 +28,13 @@ const userUpdateBody = t.Object({
 export const userRoutes = new Elysia({ prefix: "/users" })
   .get(
     "/",
-    async ({ query }) => {
+    async ({ query, set }) => {
       try {
         const { page, limit } = query;
         const result = await getAllUsers(page, limit);
         return result;
       } catch (error) {
-        console.log("Failed to fetch users");
+        return handleRouteError(error, set);
       }
     },
     {
@@ -45,35 +46,35 @@ export const userRoutes = new Elysia({ prefix: "/users" })
   )
   .patch(
     "/",
-    async ({ body }) => {
+    async ({ body, set }) => {
       try {
         const { id, data } = body;
         const updates = await updateUser(id, data);
 
         return updates;
       } catch (error) {
-        console.log("Failed to update user");
+        return handleRouteError(error, set, "User not found!");
       }
     },
     {
       body: userUpdateBody,
     },
   )
-  .get(":id", async ({ params }) => {
+  .get("/:id", async ({ params, set }) => {
     try {
       const { id } = params;
       const user = await getUserById(id);
       return user;
     } catch (error) {
-      console.log("Failed to fetch user");
+      return handleRouteError(error, set, "User not found!");
     }
   })
-  .delete("/:id", async ({ params }) => {
+  .delete("/:id", async ({ params, set }) => {
     try {
       const { id } = params;
       const res = await deleteUser(id);
       return res;
     } catch (error) {
-      console.log("Failed to delete users");
+      return handleRouteError(error, set, "User not found!");
     }
   });

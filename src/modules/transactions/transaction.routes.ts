@@ -6,6 +6,7 @@ import {
   getTransactionById,
   updateTransaction,
 } from "./transaction.service";
+import { handleRouteError } from "../../utils/responses";
 
 const transactionBody = t.Object({
   description: t.String({ minLength: 1 }),
@@ -23,7 +24,7 @@ const transactionUpdateBody = t.Partial(transactionBody);
 export const transactionRoutes = new Elysia({ prefix: "/transactions" })
   .get(
     "/",
-    async ({ query }) => {
+    async ({ query, set }) => {
       try {
         const { page, limit, type, category, from, to, sortBy, order } = query;
 
@@ -36,7 +37,7 @@ export const transactionRoutes = new Elysia({ prefix: "/transactions" })
           order,
         });
       } catch (error) {
-        console.log("Failed to fetch transactions");
+        return handleRouteError(error, set);
       }
     },
     {
@@ -65,9 +66,8 @@ export const transactionRoutes = new Elysia({ prefix: "/transactions" })
         const result = await createTransaction(body);
         set.status = 201;
         return result;
-      } catch (error: any) {
-        set.status = 400;
-        return { error: error.message };
+      } catch (error) {
+        return handleRouteError(error, set);
       }
     },
     {
@@ -76,12 +76,12 @@ export const transactionRoutes = new Elysia({ prefix: "/transactions" })
   )
   .patch(
     "/",
-    async ({ body }) => {
+    async ({ body, set }) => {
       try {
         const { id, data } = body;
         return await updateTransaction(id, data);
       } catch (error) {
-        console.log("Failed to update transaction");
+        return handleRouteError(error, set, "Transaction not found!");
       }
     },
     {
@@ -91,19 +91,19 @@ export const transactionRoutes = new Elysia({ prefix: "/transactions" })
       }),
     },
   )
-  .get("/:id", async ({ params }) => {
+  .get("/:id", async ({ params, set }) => {
     try {
       const { id } = params;
       return await getTransactionById(id);
     } catch (error) {
-      console.log("Failed to fetch transaction");
+      return handleRouteError(error, set, "Transaction not found!");
     }
   })
-  .delete("/:id", async ({ params }) => {
+  .delete("/:id", async ({ params, set }) => {
     try {
       const { id } = params;
       return await deleteTransaction(id);
     } catch (error) {
-      console.log("Failed to delete transaction");
+      return handleRouteError(error, set, "Transaction not found!");
     }
   });
