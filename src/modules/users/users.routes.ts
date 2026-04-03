@@ -6,6 +6,7 @@ import {
   updateUser,
 } from "./users.service";
 import { handleRouteError } from "../../utils/responses";
+import { requireRole } from "../../middleware/rbac.middleware";
 
 const userUpdateBody = t.Object({
   id: t.String(),
@@ -26,6 +27,7 @@ const userUpdateBody = t.Object({
 });
 
 export const userRoutes = new Elysia({ prefix: "/users" })
+  .use(requireRole("admin"))
   .get(
     "/",
     async ({ query, set }) => {

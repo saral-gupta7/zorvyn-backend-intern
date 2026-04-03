@@ -7,6 +7,7 @@ import {
   updateTransaction,
 } from "./transaction.service";
 import { handleRouteError } from "../../utils/responses";
+import { requireRole } from "../../middleware/rbac.middleware";
 
 const transactionBody = t.Object({
   description: t.String({ minLength: 1 }),
@@ -16,12 +17,12 @@ const transactionBody = t.Object({
   category: t.String({ minLength: 1 }),
   amount: t.Number(),
   date: t.Optional(t.String()),
-  user_id: t.String(),
 });
 
 const transactionUpdateBody = t.Partial(transactionBody);
 
-export const transactionRoutes = new Elysia({ prefix: "/transactions" })
+export const transactionReadRoutes = new Elysia({ prefix: "/transactions" })
+  .use(requireRole("admin", "analyst"))
   .get(
     "/",
     async ({ query, set }) => {
@@ -59,11 +60,25 @@ export const transactionRoutes = new Elysia({ prefix: "/transactions" })
       }),
     },
   )
+  .get("/:id", async ({ params, set }) => {
+    try {
+      const { id } = params;
+      return await getTransactionById(id);
+    } catch (error) {
+      return handleRouteError(error, set, "Transaction not found!");
+    }
+  });
+
+export const transactionWriteRoutes = new Elysia({ prefix: "/transactions" })
+  .use(requireRole("admin"))
   .post(
     "/",
-    async ({ body, set }) => {
+    async ({ body, set, user }) => {
       try {
-        const result = await createTransaction(body);
+        const result = await createTransaction({
+          ...body,
+          user_id: user.user_id,
+        });
         set.status = 201;
         return result;
       } catch (error) {
@@ -75,10 +90,11 @@ export const transactionRoutes = new Elysia({ prefix: "/transactions" })
     },
   )
   .patch(
-    "/",
-    async ({ body, set }) => {
+    "/:id",
+    async ({ body, set, params }) => {
       try {
-        const { id, data } = body;
+        const { data } = body;
+        const { id } = params;
         return await updateTransaction(id, data);
       } catch (error) {
         return handleRouteError(error, set, "Transaction not found!");
@@ -86,19 +102,10 @@ export const transactionRoutes = new Elysia({ prefix: "/transactions" })
     },
     {
       body: t.Object({
-        id: t.String(),
         data: transactionUpdateBody,
       }),
     },
   )
-  .get("/:id", async ({ params, set }) => {
-    try {
-      const { id } = params;
-      return await getTransactionById(id);
-    } catch (error) {
-      return handleRouteError(error, set, "Transaction not found!");
-    }
-  })
   .delete("/:id", async ({ params, set }) => {
     try {
       const { id } = params;
