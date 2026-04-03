@@ -45,7 +45,7 @@ export const app = new Elysia()
   .use(login)
   .use(register)
   .use(authMiddleware)
-  .use(userRoutes)
   .use(dashboardRoutes)
   .use(transactionReadRoutes)
-  .use(transactionWriteRoutes);
+  .use(transactionWriteRoutes)
+  .use(userRoutes);

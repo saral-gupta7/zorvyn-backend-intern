@@ -9,7 +9,7 @@ import { handleRouteError } from "../../utils/responses";
 import { requireRole } from "../../middleware/rbac.middleware";
 
 export const dashboardRoutes = new Elysia({ prefix: "/dashboard" })
-  .use(requireRole("admin", "analyst"))
+  .use(requireRole("analyst", "admin"))
   .get(
     "/summary",
     async ({ query, set }) => {
