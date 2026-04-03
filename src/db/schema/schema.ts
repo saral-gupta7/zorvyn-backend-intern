@@ -1,3 +1,4 @@
+import { createInsertSchema } from "drizzle-zod";
 import {
   numeric,
   pgEnum,
@@ -9,6 +10,10 @@ import {
 
 export const roleEnum = pgEnum("role", ["admin", "analyst", "viewer"]);
 export const statusEnum = pgEnum("status", ["active", "inactive"]);
+export const transactionTypeEnum = pgEnum("transaction_type", [
+  "income",
+  "expense",
+]);
 
 export const user = pgTable("user_table", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -20,11 +25,6 @@ export const user = pgTable("user_table", {
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
-
-export const transactionTypeEnum = pgEnum("transaction_type", [
-  "income",
-  "expense",
-]);
 
 export const transaction = pgTable("transaction_table", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -49,3 +49,5 @@ export const refreshToken = pgTable("refresh_token_table", {
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
 });
+
+export const UserSchema = createInsertSchema(user);
